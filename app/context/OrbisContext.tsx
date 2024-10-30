@@ -3,14 +3,13 @@ import {
   useRef,
   useContext,
   useEffect,
-  useState,
   useCallback,
   type ReactNode,
 } from "react";
 import type { Cacao } from "@didtools/cacao";
 import { OrbisDB, type OrbisConnectResult } from "@useorbis/db-sdk";
 import { OrbisEVMAuth } from "@useorbis/db-sdk/auth";
-import { useWalletClient, useAccount, useAccountEffect } from "wagmi";
+import { useWalletClient, useAccountEffect } from "wagmi";
 import { env } from "@/env.mjs";
 
 type OrbisDBProps = {
@@ -43,8 +42,6 @@ const Context = createContext({ orbis, isAuthenticated });
 
 export const ODB = ({ children }: OrbisDBProps) => {
   const { data: walletClient } = useWalletClient();
-  const { address } = useAccount();
-  const [isAuth, setAuth] = useState(false);
   const connection = useRef(false); // Persist across renders
 
   // Memoize the authentication function to avoid recreation
@@ -57,7 +54,6 @@ export const ODB = ({ children }: OrbisDBProps) => {
     if (authResult.auth.session) {
       connection.current = true;
       console.log("Orbis Auth'd:", authResult.auth.session);
-      setAuth(true);
       isAuthenticated = true;
       window.dispatchEvent(new Event("loaded"));
     }
@@ -66,7 +62,6 @@ export const ODB = ({ children }: OrbisDBProps) => {
   useAccountEffect({
     onDisconnect() {
       localStorage.removeItem("orbis:session");
-      setAuth(false);
       isAuthenticated = false;
       connection.current = false; // Reset the connection
     },
@@ -95,7 +90,6 @@ export const ODB = ({ children }: OrbisDBProps) => {
           console.log("Invalid session, removing...");
           localStorage.removeItem("orbis:session");
         } else {
-          setAuth(true);
           isAuthenticated = true;
           connection.current = true;
           window.dispatchEvent(new Event("loaded"));
