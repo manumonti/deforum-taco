@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { type Post } from "@/types";
 import { MediaRenderer } from "@thirdweb-dev/react";
+import { useAccount } from "wagmi";
 import { formatDate } from "@/lib/utils";
 import { env } from "@/env.mjs";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useODB } from "@/app/context/OrbisContext";
 
 export default function Posts() {
   const [allMessages, setAllMessages] = useState<Post[] | undefined>(undefined);
+  const { isConnected } = useAccount();
   const [posts, setPosts] = useState<Post[] | undefined>();
   const { orbis } = useODB();
   const [pagination, setPagination] = useState<number>(1);
@@ -84,14 +86,14 @@ export default function Posts() {
       setAllMessages([]);
       setPosts([]);
     };
-  }, []);
+  }, [isConnected]);
 
   return (
     <section className="col-span-2">
       <div className="pb-6 pt-12">
         <MaxWidthWrapper>
           <div className="mt-12 grid gap-3 sm:grid-cols-1 lg:grid-cols-1">
-            {posts &&
+            {isConnected && posts &&
               posts.map((post, index) => (
                 <div key={`${post.title}-${index}`} className="relative grow">
                   <div className="group relative grow overflow-hidden rounded-2xl border bg-background p-5 md:p-8">
@@ -163,12 +165,12 @@ export default function Posts() {
                   </div>
                 </div>
               ))}
-            {!posts && (
+            {!posts && isConnected && (
               <div className="flex flex-col space-y-4 pb-16">
                 <p>Loading...</p>
               </div>
             )}
-            {posts && posts.length ? (
+            {posts && isConnected && posts.length ? (
               <p className="mt-6 text-center text-muted-foreground">
                 Showing Posts {pagination * 10 - 9} - {pagination * 10}
               </p>
@@ -178,7 +180,7 @@ export default function Posts() {
               </p>
             )}
             <div className="mb-6 flex justify-center gap-3">
-              {allMessages && pagination * 10 < allMessages.length && (
+              {isConnected && allMessages && pagination * 10 < allMessages.length && (
                 <Button
                   onClick={() => alterPosts("next")}
                   variant="default"
@@ -189,7 +191,7 @@ export default function Posts() {
                   Next 10 Posts
                 </Button>
               )}
-              {pagination > 1 && (
+              {isConnected && pagination > 1 && (
                 <Button
                   onClick={() => alterPosts("previous")}
                   variant="default"

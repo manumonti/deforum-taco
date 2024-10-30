@@ -67,7 +67,7 @@ export function HomeModules() {
               <div className="flex flex-col">
                 <div className="flex flex-row">
                   <div className="flex items-end">
-                    {profile && (
+                    {profile && isConnected &&  (
                       <div className="flex text-left text-3xl font-semibold leading-6">
                         <MediaRenderer
                           src={profile.profile_imageid}
@@ -79,7 +79,7 @@ export function HomeModules() {
                     )}
                   </div>
                 </div>
-                {profile ? (
+                {profile && isConnected ? (
                   <p className="mt-4 text-left text-2xl font-semibold leading-6">
                     Welcome back,{" "}
                     <span className="text-pink-500">{profile.username}</span>
@@ -105,7 +105,7 @@ export function HomeModules() {
                     Welcome! Please connect your wallet
                   </p>
                 )}
-                {profile ? (
+                {profile && isConnected ? (
                   <div className="mt-4 text-left text-sm text-muted-foreground">
                     Create a new post or edit your profile
                   </div>
@@ -118,7 +118,7 @@ export function HomeModules() {
             </div>
 
             <div className="flex h-full flex-col justify-between gap-4 p-6">
-              {profile && (
+              {profile && isConnected &&  (
                 <Button
                   variant={"default"}
                   rounded="full"
