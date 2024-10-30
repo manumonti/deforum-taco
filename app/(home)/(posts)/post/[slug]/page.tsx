@@ -16,6 +16,7 @@ import { env } from "@/env.mjs";
 import { formatDate } from "@/lib/utils";
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
 import { useODB } from "@/app/context/OrbisContext";
+import { useAccountEffect, useAccount } from "wagmi";
 
 const CONTEXT_ID = env.NEXT_PUBLIC_CONTEXT_ID ?? "";
 const COMMENT_ID = env.NEXT_PUBLIC_COMMENT_ID ?? "";
@@ -33,6 +34,14 @@ export default function PostPage({
   const [poststream, setPostStream] = useState<string | undefined>(undefined);
   const [comment, setComment] = useState<string | undefined>(undefined);
   const [commentFile, setCommentFile] = useState<File | undefined>(undefined);
+  const { isConnected } = useAccount();
+
+  useAccountEffect({
+    onDisconnect() {
+      setMessage(undefined);
+      setPostStream(undefined);
+    },
+  });
 
   const uploadToIpfs = async () => {
     const uploadUrl = await upload({
@@ -126,6 +135,13 @@ export default function PostPage({
   };
 
   useEffect(() => {
+    window.addEventListener("loaded", function () {
+      try {
+        void getPost(params.slug);
+      } catch (error) {
+        console.log(error);
+      }
+    });
     void getPost(params.slug);
   }, [params.slug]);
 
@@ -250,7 +266,10 @@ export default function PostPage({
               </div>
             </div>
             {message.comments?.map((comment, index) => (
-              <div key={comment.stream_id || `comment-${index}`} className="relative grow">
+              <div
+                key={comment.stream_id || `comment-${index}`}
+                className="relative grow"
+              >
                 <div className="group relative grow overflow-hidden rounded-2xl border bg-background p-5 md:p-8">
                   <div
                     aria-hidden="true"
@@ -296,9 +315,14 @@ export default function PostPage({
       <div className="relative">
         <div className="absolute top-52 w-full border-t" />
       </div>
-      {!message && (
-        <div className="flex flex-col space-y-4 pb-16">
+      {!message && isConnected && (
+        <div className="flex flex-col space-y-4 pb-16 text-center">
           <p>Loading...</p>
+        </div>
+      )}
+      {!isConnected && (
+        <div className="flex flex-col space-y-4 pb-16 text-center">
+          <p>Please connect your wallet to view this post.</p>
         </div>
       )}
     </>
