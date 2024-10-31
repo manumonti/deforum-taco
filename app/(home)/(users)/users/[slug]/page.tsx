@@ -12,6 +12,9 @@ import { env } from "@/env.mjs";
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
 import { useODB } from "@/app/context/OrbisContext";
 
+import useTaco from "@/app/hooks/useTaco";
+import { ethers } from "ethers";
+
 export default function PostPage({
   params,
 }: {
@@ -21,8 +24,15 @@ export default function PostPage({
 }) {
   const [profile, setProfile] = useState<Profile | undefined>(undefined);
   const { orbis } = useODB();
+  const { isInitialized, decryptWithTACo } = useTaco();
+  const [decryptedPosts, setDecryptedPosts] = useState<{[key: string]: string}>({});
 
   const getProfile = async (stream_id: string): Promise<void> => {
+    if (!window.ethereum) {
+      console.error("No Ethereum provider found");
+      return;
+    }
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
     try {
       const user = await orbis.getConnectedUser();
       if (user) {
@@ -46,6 +56,17 @@ export default function PostPage({
         console.log(profResult);
         if (profResult.controller) {
           setProfile(profResult);
+          if (profResult.posts) {
+            for (const post of profResult.posts) {
+              const decrypted = await decryptWithTACo(post.body, provider);
+              if (decrypted) {
+                setDecryptedPosts(prev => ({
+                  ...prev,
+                  [post.stream_id]: decrypted.toString()
+                }));
+              }
+            }
+          }
         }
       }
     } catch (error) {
@@ -56,7 +77,7 @@ export default function PostPage({
 
   useEffect(() => {
     void getProfile(params.slug);
-  }, [params.slug]);
+  }, [params.slug, isInitialized]);
 
   return (
     <>
@@ -120,7 +141,7 @@ export default function PostPage({
                         </div>
                       )}
                       <p className="mt-4 text-base text-muted-foreground">
-                        {post.body}
+                        {decryptedPosts[post.stream_id] || "Decrypting..."}
                       </p>
                     </div>
                   </div>
