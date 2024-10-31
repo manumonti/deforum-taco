@@ -1,18 +1,16 @@
 import {
   createContext,
+  useRef,
   useContext,
   useEffect,
-  useState,
+  useCallback,
   type ReactNode,
 } from "react";
-import {
-  OrbisDB,
-  type OrbisConnectResult,
-} from "@useorbis/db-sdk";
-import type { Cacao } from '@didtools/cacao';
-import { env } from "@/env.mjs";
+import type { Cacao } from "@didtools/cacao";
+import { OrbisDB, type OrbisConnectResult } from "@useorbis/db-sdk";
 import { OrbisEVMAuth } from "@useorbis/db-sdk/auth";
-import { useWalletClient, useAccount, useAccountEffect } from "wagmi";
+import { useWalletClient, useAccountEffect } from "wagmi";
+import { env } from "@/env.mjs";
 
 type OrbisDBProps = {
   children: ReactNode;
@@ -25,10 +23,6 @@ declare global {
     ethereum?: any;
   }
 }
-
-/**
- * Configure Orbis Client & create context.
- */
 
 const orbis = new OrbisDB({
   ceramic: {
@@ -47,78 +41,68 @@ let isAuthenticated = false;
 const Context = createContext({ orbis, isAuthenticated });
 
 export const ODB = ({ children }: OrbisDBProps) => {
-  function StartAuth() {
-    const { data: walletClient } = useWalletClient();
-    const [isAuth, setAuth] = useState(false);
-    const { address } = useAccount();
-    useAccountEffect({
-      onDisconnect() {
-        localStorage.removeItem("orbis:session");
-      },
-    });
-    useEffect(() => {
-      const StartOrbisAuth = async (): Promise<
-        OrbisConnectResult | undefined
-      > => {
-        const auth = new OrbisEVMAuth(window.ethereum);
-        // Authenticate - this option persists the session in local storage
-        const authResult: OrbisConnectResult = await orbis.connectUser({
-          auth,
-        });
-        if (authResult.auth.session) {
-          console.log("Orbis Auth'd:", authResult.auth.session);
-          return authResult;
-        }
+  const { data: walletClient } = useWalletClient();
+  const connection = useRef(false); // Persist across renders
 
-        return;
-      };
+  // Memoize the authentication function to avoid recreation
+  const StartOrbisAuth = useCallback(async () => {
+    if (connection.current) return; // Prevent multiple calls
 
-      // Only run this if the wallet client is available
-      if (walletClient) {
-        const address = walletClient.account.address;
-        if (localStorage.getItem("orbis:session") && address) {
-          const serializedAttestation = localStorage.getItem("orbis:session") ?? "";
-          const {cacao} = JSON.parse(Buffer.from(serializedAttestation, "base64").toString()) as {cacao: Cacao};
-          console.log("Parsed Session:", cacao);
-          const expTime = cacao.p.exp;
-          const attestationAddress = cacao.p.iss.replace("did:pkh:eip155:1:", "").toLowerCase();
-          if (
-            attestationAddress !==
-            address.toLowerCase()
-          ) {
-            console.log("Address mismatch, removing session");
-            localStorage.removeItem("orbis:session");
-          }
-          //@ts-expect-error - TS doesn't know about the expirationTime field
-          else if (expTime > Date.now()) {
-            localStorage.removeItem("orbis:session");
-          } else {
-            setAuth(true);
-            isAuthenticated = true;
-            window.dispatchEvent(new Event("loaded"));
-          }
+    const auth = new OrbisEVMAuth(window.ethereum);
+    const authResult: OrbisConnectResult = await orbis.connectUser({ auth });
+
+    if (authResult.auth.session) {
+      connection.current = true;
+      console.log("Orbis Auth'd:", authResult.auth.session);
+      isAuthenticated = true;
+      window.dispatchEvent(new Event("loaded"));
+    }
+  }, []);
+
+  useAccountEffect({
+    onDisconnect() {
+      localStorage.removeItem("orbis:session");
+      isAuthenticated = false;
+      connection.current = false; // Reset the connection
+    },
+  });
+
+  // Main effect to handle authentication logic
+  useEffect(() => {
+    if (walletClient && !connection.current) {
+      const storedSession = localStorage.getItem("orbis:session");
+
+      if (storedSession && walletClient.account.address) {
+        const { cacao } = JSON.parse(
+          Buffer.from(storedSession, "base64").toString(),
+        ) as { cacao: Cacao };
+
+        const expTime = cacao.p.exp;
+        const sessionAddress = cacao.p.iss
+          .replace("did:pkh:eip155:1:", "")
+          .toLowerCase();
+
+        if (
+          sessionAddress !== walletClient.account.address.toLowerCase() ||
+          //@ts-ignore
+          expTime > Date.now()
+        ) {
+          console.log("Invalid session, removing...");
+          localStorage.removeItem("orbis:session");
+        } else {
+          isAuthenticated = true;
+          connection.current = true;
+          window.dispatchEvent(new Event("loaded"));
         }
-        if (!isAuthenticated) {
-          StartOrbisAuth().then((authResult) => {
-            if (authResult) {
-              setAuth(true);
-              isAuthenticated = true;
-              window.dispatchEvent(new Event("loaded"));
-            }
-          });
-        }
-        orbis.getConnectedUser().then((user) => {
-          console.log("Connected User:", user);
-        });
+      } else if (!isAuthenticated) {
+        StartOrbisAuth();
       }
-    }, [isAuth, walletClient, address]);
 
-    return isAuth;
-  }
-
-  if (!isAuthenticated) {
-    StartAuth();
-  }
+      orbis.getConnectedUser().then((user) => {
+        console.log("Connected User:", user);
+      });
+    }
+  }, [walletClient, StartOrbisAuth]);
 
   return (
     <Context.Provider value={{ orbis, isAuthenticated }}>

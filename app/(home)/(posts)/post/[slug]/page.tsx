@@ -34,6 +34,14 @@ export default function PostPage({
   const [poststream, setPostStream] = useState<string | undefined>(undefined);
   const [comment, setComment] = useState<string | undefined>(undefined);
   const [commentFile, setCommentFile] = useState<File | undefined>(undefined);
+  const { isConnected } = useAccount();
+
+  useAccountEffect({
+    onDisconnect() {
+      setMessage(undefined);
+      setPostStream(undefined);
+    },
+  });
 
   const { isInitialized, decryptWithTACo } = useTaco();
 
@@ -142,6 +150,13 @@ export default function PostPage({
   };
 
   useEffect(() => {
+    window.addEventListener("loaded", function () {
+      try {
+        void getPost(params.slug);
+      } catch (error) {
+        console.log(error);
+      }
+    });
     void getPost(params.slug);
   }, [params.slug, isInitialized]);
 
@@ -315,9 +330,14 @@ export default function PostPage({
       <div className="relative">
         <div className="absolute top-52 w-full border-t" />
       </div>
-      {!message && (
-        <div className="flex flex-col space-y-4 pb-16">
+      {!message && isConnected && (
+        <div className="flex flex-col space-y-4 pb-16 text-center">
           <p>Loading...</p>
+        </div>
+      )}
+      {!isConnected && (
+        <div className="flex flex-col space-y-4 pb-16 text-center">
+          <p>Please connect your wallet to view this post.</p>
         </div>
       )}
     </>

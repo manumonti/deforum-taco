@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { MediaRenderer, useStorageUpload } from "@thirdweb-dev/react";
 import TextareaAutosize from "react-textarea-autosize";
-import { useAccount } from "wagmi";
+import { useAccount, useAccountEffect } from "wagmi";
 import { env } from "@/env.mjs";
 import { type Profile } from "@/types/index";
 import { Button } from "@/components/ui/button";
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
 import { useODB } from "@/app/context/OrbisContext";
+import { set } from "zod";
 
 const PROFILE_ID = env.NEXT_PUBLIC_PROFILE_ID ?? "";
 const CONTEXT_ID = env.NEXT_PUBLIC_CONTEXT_ID ?? "";
@@ -23,6 +24,12 @@ export function ProfileModules() {
   const { orbis } = useODB();
   const { address } = useAccount();
   const { mutateAsync: upload } = useStorageUpload();
+
+  useAccountEffect({
+    onDisconnect() {
+      setProfile(undefined);
+    },
+  });
 
   const uploadToIpfs = async () => {
     const uploadUrl = await upload({

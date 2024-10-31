@@ -4,6 +4,7 @@ import { useODB } from "@/app/context/OrbisContext";
 import useTaco from "@/app/hooks/useTaco";
 import { Icons } from "@/components/shared/icons";
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
+import { useAccountEffect } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env.mjs";
 import { formatDate } from "@/lib/utils";
@@ -23,6 +24,14 @@ export default function Posts() {
   }>({});
 
   const { isInitialized, decryptWithTACo } = useTaco();
+
+  useAccountEffect({
+    onDisconnect() {
+      setAllMessages([]);
+      setPosts([]);
+      setPagination(1);
+    },
+  });
 
   const getPosts = async (): Promise<void> => {
     if (!window.ethereum) {
