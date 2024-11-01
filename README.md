@@ -14,13 +14,8 @@ This application emulates a web forum, complete with posts, comments, images, an
 
 ## Installation
 
-First, create a local clone of the application:
-
-```bash
-git clone https://github.com/nucypher/taco-orbisdb-demo && cd taco-orbisdb-demo
-```
-
-Next, install your dependencies:
+First, create this repository on your local machine.
+Next, install the dependencies:
 
 ```bash
 nvm use 20
