@@ -81,7 +81,7 @@ export function ProfileModules() {
       }
     } catch (error) {
       console.error(error);
-      return undefined;
+      return;
     }
   };
 
@@ -103,7 +103,7 @@ export function ProfileModules() {
       }
     } catch (error) {
       console.error(error);
-      return undefined;
+      return;
     }
   };
 

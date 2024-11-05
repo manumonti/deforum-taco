@@ -35,7 +35,7 @@ export function HomeModules() {
       }
     } catch (error) {
       console.error(error);
-      return undefined;
+      return;
     }
   };
 
