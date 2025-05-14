@@ -84,8 +84,8 @@ export const ODB = ({ children }: OrbisDBProps) => {
 
         if (
           sessionAddress !== walletClient.account.address.toLowerCase() ||
-          //@ts-ignore
-          expTime > Date.now()
+          expTime === undefined ||
+          Date.parse(expTime) < Date.now()
         ) {
           console.log("Invalid session, removing...");
           localStorage.removeItem("orbis:session");
