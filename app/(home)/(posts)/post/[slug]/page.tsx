@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
+import { useAccount, useAccountEffect } from "wagmi";
 
 const CONTEXT_ID = env.NEXT_PUBLIC_CONTEXT_ID ?? "";
 const COMMENT_ID = env.NEXT_PUBLIC_COMMENT_ID ?? "";
