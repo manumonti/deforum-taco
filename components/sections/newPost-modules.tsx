@@ -46,7 +46,7 @@ export function PostModules() {
         const profile = orbis
           .select("name", "username", "imageid", "description")
           .from(PROFILE_ID)
-          .where({ controller: user.user.did.toLowerCase() })
+          .where({ controller: user.user.did })
           .context(CONTEXT_ID);
         const profileResult = await profile.run();
         if (profileResult.rows.length) {
