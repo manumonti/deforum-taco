@@ -9,7 +9,6 @@ import { env } from "@/env.mjs";
 import { Button } from "@/components/ui/button";
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
 import { useODB } from "@/app/context/OrbisContext";
-import { set } from "zod";
 
 const PROFILE_ID = env.NEXT_PUBLIC_PROFILE_ID ?? "";
 const CONTEXT_ID = env.NEXT_PUBLIC_CONTEXT_ID ?? "";
@@ -26,7 +25,7 @@ export function HomeModules() {
         const profile = orbis
           .select("name", "username", "profile_imageid", "description")
           .from(PROFILE_ID)
-          .where({ controller: user.user.did.toLowerCase() })
+          .where({ controller: user.user.did })
           .context(CONTEXT_ID);
         const profileResult = await profile.run();
         if (profileResult.rows.length) {
