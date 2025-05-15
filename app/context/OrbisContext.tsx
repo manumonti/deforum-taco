@@ -77,6 +77,7 @@ export const ODB = ({ children }: OrbisDBProps) => {
           Buffer.from(storedSession, "base64").toString(),
         ) as { cacao: Cacao };
 
+        const issuedAt = Date.parse(cacao.p.iat);
         const expTime = cacao.p.exp;
         const sessionAddress = cacao.p.iss
           .replace("did:pkh:eip155:1:", "")
@@ -84,8 +85,8 @@ export const ODB = ({ children }: OrbisDBProps) => {
 
         if (
           sessionAddress !== walletClient.account.address.toLowerCase() ||
-         ( expTime !== undefined &&
-          Date.parse(expTime) < Date.now()
+          (expTime !== undefined && Date.parse(expTime) < Date.now()) ||
+          issuedAt < Date.now() - 2 * 60 * 60 * 1000
         ) {
           console.log("Invalid session, removing...");
           localStorage.removeItem("orbis:session");
