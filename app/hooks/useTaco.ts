@@ -7,7 +7,7 @@ import {
 } from "@nucypher/taco";
 import {
   SingleSignOnEIP4361AuthProvider,
-  USER_ADDRESS_PARAM_EXTERNAL_EIP4361,
+  USER_ADDRESS_PARAM_DEFAULT,
 } from "@nucypher/taco-auth";
 import { DIDSession } from "did-session";
 import { ethers } from "ethers";
@@ -58,7 +58,7 @@ export default function useTaco() {
     const conditionContext =
       conditions.context.ConditionContext.fromMessageKit(tmk);
     conditionContext.addAuthProvider(
-      USER_ADDRESS_PARAM_EXTERNAL_EIP4361,
+      USER_ADDRESS_PARAM_DEFAULT,
       authProvider,
     );
 

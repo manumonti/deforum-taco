@@ -92,7 +92,7 @@ export function PostModules() {
       const condition = new conditions.base.rpc.RpcCondition({
         chain: 80002,
         method: "eth_getBalance",
-        parameters: [":userAddressExternalEIP4361"],
+        parameters: [":userAddress"],
         returnValueTest: {
           comparator: ">",
           value: 0,
